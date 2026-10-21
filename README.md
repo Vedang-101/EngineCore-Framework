@@ -12,7 +12,7 @@ infrastructure.
 > repository.
 
 ## Overview
-![Architecture Overview](architecture.svg)
+![Architecture Overview](architecture.png)
 
 **Game Engine Core & Concurrency Framework** explores the foundational
 systems needed to support a modular real-time engine. The design
