@@ -12,8 +12,6 @@ infrastructure.
 > repository.
 
 ## Overview
-![Architecture Overview](architecture.png)
-
 **Game Engine Core & Concurrency Framework** explores the foundational
 systems needed to support a modular real-time engine. The design
 separates reusable engine functionality from the runtime host and
@@ -22,10 +20,10 @@ data-oriented structures for scalable execution.
 
 The documented architecture is organized around three build targets:
 
--   **`EngineCore`** --- a static library containing reusable engine
+-   **`EngineCore`**: a static library containing reusable engine
     systems and core abstractions.
--   **`EngineRuntime`** --- the executable runtime host.
--   **`GameSandbox`** --- a shared library intended for game-side code
+-   **`EngineRuntime`**: the executable runtime host.
+-   **`GameSandbox`**: a shared library intended for game-side code
     and modular loading.
 
 The project uses C++20 and Premake5 for build configuration.
@@ -46,8 +44,83 @@ The project uses C++20 and Premake5 for build configuration.
     for dynamic libraries and filesystem/application-data paths.
 
 ## Architecture
+![Architecture Overview](architecture.png)
 
-quirements for filtering entities out of a
+## Core systems
+
+### 1. Work-stealing job system
+
+The job system is designed to distribute independent units of work
+across worker threads while allowing idle workers to help execute work
+queued elsewhere.
+
+Documented components include:
+
+-   **`JobScheduler`**: coordinates worker execution and job
+    scheduling.
+-   **`Worker`**: represents a worker participating in job execution.
+-   **`ChaseLevDequeue`**: supports worker-local work queues and
+    stealing.
+-   **`Job`** and **`Counter`**: represent work and track completion.
+-   **C++20 coroutine tasks**: provide task-oriented asynchronous
+    execution.
+
+The documented scheduling approach uses worker-local queues. When a
+worker has no local work, it attempts to steal work, first from a
+remembered victim and then from a randomly selected worker. Idle workers
+can sleep rather than continuously spin.
+
+#### Coroutine task primitives
+
+The task interface includes:
+
+-   **`Task`**: a coroutine-based unit of asynchronous work.
+-   **`Yield`**: allows a task to yield execution.
+-   **`WaitForZero`**: supports waiting until a counter reaches zero.
+
+Together, the scheduler and coroutine facilities form the basis for
+coordinating asynchronous engine work. Actual performance and
+scalability should be evaluated with measurements from a built version
+of the project.
+
+### 2. Entity-Component-System (ECS)
+
+The ECS is designed around data-oriented storage and component-based
+composition.
+
+Documented elements include:
+
+-   **`Registry`**: the central interface for ECS operations.
+-   **`EntityPool`**: manages entity identifiers and entity
+    allocation.
+-   **`ComponentPool`**: stores component data.
+-   **`ComponentDirectory`**: tracks component-pool information.
+-   **`ComponentHandle`**: provides a handle-oriented way to refer to
+    components.
+-   **`View`**: supports querying entities by component requirements.
+
+#### Entity identifiers
+
+The documented `EntityID` is a 32-bit identifier divided into:
+
+-   **20 bits** for the entity index.
+-   **12 bits** for the generation.
+
+The generation helps distinguish a reused entity slot from an earlier
+entity that occupied the same index.
+
+A separate **64-bit `GUID`** is used as a persistent identifier.
+
+#### Storage and queries
+
+The documented ECS storage and query design includes:
+
+-   Dense component arrays for compact iteration.
+-   A paged `SparseIndex` to map entity indices to component storage.
+-   Swap-with-last compaction when removing dense-array entries.
+-   Query planning that starts with the smallest required component
+    pool.
+-   Excluded-component requirements for filtering entities out of a
     view.
 
 These choices are intended to support efficient component lookup and
@@ -92,9 +165,9 @@ foundation for coordinating scene changes with the rest of the runtime.
 
 Its documented state encoding is:
 
--   `0` --- unlocked.
--   `1` through `MAX - 1` --- reader count.
--   `UINT32_MAX` --- writer holds the gate.
+-   `0`: unlocked.
+-   `1` through `MAX - 1`: reader count.
+-   `UINT32_MAX`: writer holds the gate.
 
 RAII wrappers, **`ReadGate`** and **`WriteGate`**, manage acquisition
 and release. The implementation also documents a spin-then-wait strategy
@@ -107,9 +180,9 @@ implementation and measured use cases.
 
 ## Supporting containers and utilities
 
-  -----------------------------------------------------------------------
+ :--------------------------------------------------------------------
   Component                           Purpose
-  ----------------------------------- -----------------------------------
+ :--------------------------------:--------------------------------
   `RawStorage`                        Aligned, strided, type-erased
                                       storage.
 
@@ -130,7 +203,7 @@ implementation and measured use cases.
                                       application.
 
   `GUID`                              64-bit persistent identifier.
-  -----------------------------------------------------------------------
+ :--------------------------------------------------------------------
 
 These utilities support the broader engine architecture and reduce the
 need for each subsystem to implement its own low-level storage or
