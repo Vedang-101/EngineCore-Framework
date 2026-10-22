@@ -180,30 +180,16 @@ implementation and measured use cases.
 
 ## Supporting containers and utilities
 
- :--------------------------------------------------------------------
-  Component                           Purpose
- :--------------------------------:--------------------------------
-  `RawStorage`                        Aligned, strided, type-erased
-                                      storage.
+|  Component                    |       Purpose |
+| :--- | :--- |
+|  `RawStorage` |                        Aligned, strided, type-erased storage. |
+|  `SparseIndex`   |                    Paged sparse mapping; the documented page size is 2048 entries. |
+|  `SharedUnorderedSet` |                Hash-set structure using sharded mutex protection. |
+|  `ConcurrentConsumerStack`  |           Stack-oriented structure for concurrent consumers. |
+|  `ChaseLevDequeue`          |         Work-stealing deque used by the job system. |
+|  `CommandBuffer`            |        Collects operations for deferred application. |
+|  `GUID`                     |        64-bit persistent identifier. |
 
-  `SparseIndex`                       Paged sparse mapping; the
-                                      documented page size is 2048
-                                      entries.
-
-  `SharedUnorderedSet`                Hash-set structure using sharded
-                                      mutex protection.
-
-  `ConcurrentConsumerStack`           Stack-oriented structure for
-                                      concurrent consumers.
-
-  `ChaseLevDequeue`                   Work-stealing deque used by the job
-                                      system.
-
-  `CommandBuffer`                     Collects operations for deferred
-                                      application.
-
-  `GUID`                              64-bit persistent identifier.
- :--------------------------------------------------------------------
 
 These utilities support the broader engine architecture and reduce the
 need for each subsystem to implement its own low-level storage or
